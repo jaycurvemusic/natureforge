@@ -795,6 +795,18 @@ function varmistaAudioContext() {
     }
 }
 
+function ensureMixerInitialized() {
+    if (!ladatutAanet || typeof ladatutAanet !== 'object') ladatutAanet = {};
+    if (!ladatutMeta || typeof ladatutMeta !== 'object') ladatutMeta = {};
+    if (!aktiivisetKanavat || typeof aktiivisetKanavat !== 'object') aktiivisetKanavat = {};
+    if (!uiRefs || typeof uiRefs !== 'object') uiRefs = {};
+}
+
+function getAudioPreviewUrl(soundMeta) {
+    if (!soundMeta || typeof soundMeta !== 'object') return null;
+    return soundMeta.preview || soundMeta.url || soundMeta.audioUrl || soundMeta.audio || soundMeta.previewUrl || null;
+}
+
 function rakennaMikseri() {
     const mixerContainer = document.getElementById('mixerChannels');
     mixerContainer.innerHTML = '';
@@ -1502,12 +1514,22 @@ function tallennaSettiSelaimeen() {
 }
 
 async function lataaSettiObjektista(setti) {
+    ensureMixerInitialized();
     // Ensure audio context and related state are ready before loading tracks
     varmistaAudioContext();
     stopAllSmooth();
 
     document.getElementById('statusField').innerText =
-        `Loading set:\n${setti.name || "Untitled"}`;
+        `Loading set:\n${setti?.name || "Untitled"}`;
+
+    if (!setti || typeof setti !== 'object') {
+        throw new Error('Invalid Nature Forge set data');
+    }
+
+    const importedChannels = Array.isArray(setti.channels) ? setti.channels : null;
+    if (!importedChannels) {
+        throw new Error('Invalid Nature Forge set data');
+    }
 
     if (setti.name) document.getElementById('setName').value = setti.name;
     if (setti.preset) document.getElementById('presetSelect').value = setti.preset;
@@ -1518,18 +1540,27 @@ async function lataaSettiObjektista(setti) {
 
     const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    for (const ch of setti.channels || []) {
-        if (!ch.sound || !ch.sound.preview) continue;
+    for (const ch of importedChannels) {
+        const audioUrl = getAudioPreviewUrl(ch.sound);
+        if (!ch || !ch.id || !audioUrl) continue;
 
         try {
-            const audioResp = await fetch(ch.sound.preview);
+            const audioResp = await fetch(audioUrl);
             const arrayBuffer = await audioResp.arrayBuffer();
             const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
 
             ladatutAanet[ch.id] = audioBuffer;
-            ladatutMeta[ch.id] = ch.sound;
+            ladatutMeta[ch.id] = {
+                id: ch.sound?.id || ch.id,
+                name: ch.sound?.name || `Imported ${ch.id}`,
+                username: ch.sound?.username || "imported",
+                license: ch.sound?.license || "unknown",
+                url: ch.sound?.url || audioUrl,
+                preview: audioUrl,
+                duration: ch.sound?.duration || audioBuffer.duration
+            };
         } catch (e) {
-            console.warn("Setin äänen lataus epäonnistui:", ch.id, e);
+            console.warn("Set audio load failed:", ch.id, e);
         }
     }
 
@@ -1553,7 +1584,7 @@ async function lataaSettiObjektista(setti) {
         paivitaEvolutionReadout(setti.evolutionAmount);
     }
 
-    for (const ch of setti.channels || []) {
+    for (const ch of importedChannels) {
         if (!aktiivisetKanavat[ch.id]) continue;
 
         const vol = normalizeVolume(ch.volume ?? 0.5, 0.5);
