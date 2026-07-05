@@ -271,6 +271,34 @@
             display: none;
         }
 
+        .brand-watermark {
+            position: fixed;
+            top: 18px;
+            right: 24px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.12;
+            transition: opacity 0.4s ease;
+        }
+
+        .brand-watermark img {
+            width: 180px;
+            height: auto;
+            display: block;
+            filter:
+                drop-shadow(0 0 8px rgba(80,180,255,0.15));
+        }
+
+        .brand-watermark:hover {
+            opacity: 0.20;
+        }
+
+        @media (max-width: 900px) {
+            .brand-watermark img {
+                width: 120px;
+            }
+        }
+
         @media (max-width: 720px) {
             .top-controls,
             .global-controls,
@@ -364,6 +392,10 @@ You can load a new Freesound landscape, load a saved browser set, or import your
     <div class="credits" id="creditsBox">
         Sound credits will appear here after sounds are loaded.
     </div>
+</div>
+
+<div class="brand-watermark" aria-hidden="true">
+    <img src="assets/logo/curved-sounds-logo.png" alt="Curved Sounds">
 </div>
 
 <script>
