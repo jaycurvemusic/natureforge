@@ -1476,13 +1476,19 @@ function vieSettiJson() {
     const blob = new Blob([JSON.stringify(setti, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
 
-    const safeName = setti.name
-        .replace(/[^a-z0-9_\-]+/gi, "_")
-        .replace(/_+/g, "_");
+    const now = new Date();
+
+    const timestamp =
+      now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0') + '_' +
+      String(now.getHours()).padStart(2, '0') + '-' +
+      String(now.getMinutes()).padStart(2, '0') + '-' +
+      String(now.getSeconds()).padStart(2, '0');
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${safeName || "nature_forge_set"}.json`;
+    a.download = `NatureForge_Preset_${timestamp}.json`;
     a.click();
 
     URL.revokeObjectURL(url);
