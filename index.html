@@ -548,6 +548,8 @@ function getChannelDisplayName(id) {
 }
 
 async function lataaLuontoAanetLaaja() {
+    // Ensure audio context exists even when loading via Freesound path
+    varmistaAudioContext();
     const status = document.getElementById('statusField');
     let onnistuneet = 0;
 
@@ -834,6 +836,8 @@ function updateStartStopAllButton() {
 }
 
 function startAllChannels() {
+    // Ensure audio context exists before starting channels (fixes import-before-freesound issue)
+    varmistaAudioContext();
     Object.keys(aktiivisetKanavat).forEach(id => {
         const kanava = aktiivisetKanavat[id];
 
@@ -1117,6 +1121,13 @@ function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+function normalizeVolume(value, fallback = 0.5) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    if (n > 1) return Math.max(0, Math.min(1, n / 100));
+    return Math.max(0, Math.min(1, n));
+}
+
 function toggleStartStopAll() {
     if (anyChannelPlaying()) {
         stopAllSmooth();
@@ -1379,6 +1390,8 @@ function tallennaSettiSelaimeen() {
 }
 
 async function lataaSettiObjektista(setti) {
+    // Ensure audio context and related state are ready before loading tracks
+    varmistaAudioContext();
     stopAllSmooth();
 
     document.getElementById('statusField').innerText =
@@ -1431,10 +1444,11 @@ async function lataaSettiObjektista(setti) {
     for (const ch of setti.channels || []) {
         if (!aktiivisetKanavat[ch.id]) continue;
 
-        muutaVoimakkuutta(ch.id, ch.volume ?? 0.5);
+        const vol = normalizeVolume(ch.volume ?? 0.5, 0.5);
+        muutaVoimakkuutta(ch.id, vol);
 
         if (uiRefs[ch.id]) {
-            uiRefs[ch.id].slider.value = (ch.volume ?? 0.5).toFixed(2);
+            uiRefs[ch.id].slider.value = vol.toFixed(2);
         }
     }
 
@@ -1480,6 +1494,7 @@ function tuoSettiJson(file) {
     reader.onload = async (e) => {
         try {
             const setti = JSON.parse(e.target.result);
+            varmistaAudioContext();
             await lataaSettiObjektista(setti);
             hideStartupPanel();
             updateStartStopAllButton();
