@@ -94,6 +94,85 @@
             margin-bottom: 24px;
         }
 
+        .utility-header {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            justify-content: end;
+            width: min(100%, 540px);
+            margin: 0 auto 18px auto;
+        }
+
+        .utility-header button {
+            width: 100%;
+        }
+
+        .help-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 999;
+        }
+
+        .help-modal.hidden {
+            display: none;
+        }
+
+        .help-modal-content {
+            width: min(100%, 640px);
+            max-height: 90vh;
+            overflow-y: auto;
+            background: rgba(8, 12, 9, 0.98);
+            border: 1px solid rgba(113, 166, 129, 0.25);
+            padding: 22px;
+            border-radius: 14px;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .help-modal-content h2 {
+            margin-top: 0;
+            color: #91c392;
+            font-size: 1rem;
+        }
+
+        .help-modal-content p,
+        .help-modal-content li {
+            color: #c7d6c2;
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .help-modal-content ul {
+            margin: 10px 0 18px;
+            padding-left: 18px;
+        }
+
+        .help-modal-close {
+            margin-top: 18px;
+            display: inline-flex;
+        }
+
+        @media (max-width: 720px) {
+            .top-controls,
+            .global-controls,
+            .save-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .utility-header {
+                grid-template-columns: 1fr;
+            }
+
+            .channel {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .status {
             margin-bottom: 22px;
             font-size: 0.8rem;
@@ -323,6 +402,12 @@
     <h1>nature_forge // forest_mixer</h1>
     <div class="subtitle">Curved Sounds Fieldscape Instrument</div>
 
+    <div class="utility-header">
+        <button id="helpBtn" type="button">Help</button>
+        <button id="homeBtn" type="button">Home</button>
+        <button id="donateBtn" type="button">Donate</button>
+    </div>
+
     <div class="status" id="statusField">Choose how to start.
 
 You can load a new Freesound landscape, load a saved browser set, or import your own JSON set.</div>
@@ -331,6 +416,31 @@ You can load a new Freesound landscape, load a saved browser set, or import your
         <button id="loadFreesoundBtn" type="button">LOAD NEW FREESOUND LANDSCAPE</button>
         <button id="loadSavedStartupBtn" type="button">LOAD SAVED BROWSER SET</button>
         <button id="importStartupBtn" type="button">IMPORT YOUR JSON SET</button>
+    </div>
+
+    <div id="helpModal" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpModalTitle">
+        <div class="help-modal-content">
+            <h2 id="helpModalTitle">Nature Forge<br>Curved Sounds Fieldscape Instrument</h2>
+            <p>• Randomize Landscape creates a new natural soundscape.</p>
+            <p>• Journey mode automatically evolves the environment over time.</p>
+            <p>• Use Landscape Presets for instant atmospheres.</p>
+            <p>• Adjust individual track volumes to balance the mix.</p>
+            <p>• Master Volume controls the overall output level.</p>
+            <p>• Master Lowpass softens the sound for relaxing listening.</p>
+            <p>• Save Set stores the current mix in your browser.</p>
+            <p>• Load From Browser restores a saved mix.</p>
+            <p>• Export JSON saves a preset file.</p>
+            <p>• Import JSON loads a previously exported preset.</p>
+            <p>• Stop All immediately stops every playing sound.</p>
+            <h3>Journey Presets:</h3>
+            <p>Calm Forest<br>Forest + Birds + very low Wind</p>
+            <p>Windy Forest<br>Forest + Wind + fewer Birds</p>
+            <p>Light Rain<br>Rain + soft Forest + occasional Birds</p>
+            <p>Heavy Rain<br>Rain dominates, Birds reduced</p>
+            <p>Storm<br>Strong Rain, Wind and distant nature ambience</p>
+            <p>Created by Curved Sounds<br>https://curvedsounds.com</p>
+            <button id="helpModalCloseBtn" class="help-modal-close">Close</button>
+        </div>
     </div>
 
     <div class="top-controls">
@@ -1608,6 +1718,18 @@ document.getElementById('journeyBtn').addEventListener('click', () => {
     }
 });
 
+document.getElementById('helpBtn').addEventListener('click', () => {
+    document.getElementById('helpModal').classList.remove('hidden');
+});
+
+document.getElementById('homeBtn').addEventListener('click', () => {
+    window.open('https://curvedsounds.com/', '_blank');
+});
+
+document.getElementById('donateBtn').addEventListener('click', () => {
+    window.open('https://buymeacoffee.com/liwgdnxqyw', '_blank');
+});
+
 document.getElementById('loadFreesoundBtn').addEventListener('click', () => {
     journeyEngine.stop();
     startWithFreesound();
@@ -1644,6 +1766,16 @@ document.getElementById('importSetBtn').addEventListener('click', () => {
 document.getElementById('importFile').addEventListener('change', (e) => {
     if (e.target.files && e.target.files[0]) {
         tuoSettiJson(e.target.files[0]);
+    }
+});
+
+document.getElementById('helpModalCloseBtn').addEventListener('click', () => {
+    document.getElementById('helpModal').classList.add('hidden');
+});
+
+document.getElementById('helpModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        document.getElementById('helpModal').classList.add('hidden');
     }
 });
 
