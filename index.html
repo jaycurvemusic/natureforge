@@ -331,6 +331,7 @@ You can load a new Freesound landscape, load a saved browser set, or import your
     <div class="top-controls">
         <button id="randomizeBtn">RANDOMIZE LANDSCAPE</button>
         <button id="fadeAllBtn">FADE ALL OUT</button>
+        <button id="journeyBtn" type="button">AMBIENT JOURNEY</button>
     </div>
 
     <div class="global-controls">
@@ -688,6 +689,8 @@ function rakennaMikseri() {
             sources: [],
             isPlaying: false,
             targetVol: 0.5,
+            volume: 0.5,
+            currentVolume: 0.5,
             scheduler: null,
             generation: 0
         };
@@ -738,6 +741,10 @@ function rakennaMikseri() {
 
         uiRefs[id] = { slider, readout, button, soundDiv };
     });
+
+    if (journeyEngine && typeof journeyEngine.refreshTrackRoles === 'function') {
+        journeyEngine.refreshTrackRoles();
+    }
 }
 
 function toggleKanava(id, button) {
@@ -834,7 +841,225 @@ function startAllChannels() {
         }
     });
 
+    if (anyChannelPlaying()) {
+        document.body.classList.add('is-playing');
+    }
+
     updateStartStopAllButton();
+}
+
+const journeyEngine = {
+    active: false,
+    currentState: null,
+    timerId: null,
+    fadeTimers: [],
+    stateOrder: [
+        'calm_forest',
+        'windy_forest',
+        'light_rain',
+        'heavy_rain',
+        'storm',
+        'after_rain'
+    ],
+    stateTargets: {
+        calm_forest: { forest: 0.78, wind: 0.28, birds: 0.44, rain: 0.00, storm: 0.00 },
+        windy_forest: { forest: 0.72, wind: 0.56, birds: 0.22, rain: 0.00, storm: 0.00 },
+        light_rain: { forest: 0.64, wind: 0.42, birds: 0.16, rain: 0.32, storm: 0.00 },
+        heavy_rain: { forest: 0.52, wind: 0.50, birds: 0.08, rain: 0.68, storm: 0.00 },
+        storm: { forest: 0.38, wind: 0.78, birds: 0.02, rain: 0.84, storm: 0.48 },
+        after_rain: { forest: 0.70, wind: 0.34, birds: 0.30, rain: 0.14, storm: 0.00 }
+    },
+
+    start() {
+        if (this.active) return;
+        this.active = true;
+        this.currentState = 'calm_forest';
+        this.updateButton(true);
+        if (!anyChannelPlaying()) {
+            startAllChannels();
+        }
+        this.scheduleNextState(this.currentState, 0);
+    },
+
+    stop() {
+        this.active = false;
+        this.clearFadeTimers();
+        if (this.timerId) {
+            clearTimeout(this.timerId);
+            this.timerId = null;
+        }
+        this.updateButton(false);
+    },
+
+    updateButton(running) {
+        const btn = document.getElementById('journeyBtn');
+        if (!btn) return;
+        btn.innerText = running ? 'STOP JOURNEY' : 'AMBIENT JOURNEY';
+    },
+
+    scheduleNextState(stateName) {
+        if (!this.active) return;
+        const targets = this.buildStateTargets(stateName);
+        const transitionSeconds = randomBetween(60, 90);
+        this.fadeToTargets(targets, transitionSeconds);
+        const durationSeconds = randomBetween(120, 360);
+
+        const status = document.getElementById('statusField');
+        if (status) {
+            status.innerText = `Ambient Journey: ${stateName.replace('_', ' ')} — evolving for ${Math.round(durationSeconds)} seconds.`;
+        }
+
+        this.currentState = stateName;
+        const nextState = this.chooseNextState(stateName);
+
+        this.timerId = setTimeout(() => {
+            if (this.active) {
+                this.scheduleNextState(nextState);
+            }
+        }, durationSeconds * 1000);
+    },
+
+    chooseNextState(currentState) {
+        if (currentState === 'heavy_rain') {
+            return Math.random() < 0.4 ? 'storm' : 'after_rain';
+        }
+
+        if (currentState === 'storm') {
+            return 'after_rain';
+        }
+
+        if (currentState === 'after_rain') {
+            return Math.random() < 0.5 ? 'calm_forest' : 'windy_forest';
+        }
+
+        const index = this.stateOrder.indexOf(currentState);
+        if (index >= 0 && index < this.stateOrder.length - 1) {
+            return this.stateOrder[index + 1];
+        }
+
+        return 'calm_forest';
+    },
+
+    buildStateTargets(stateName) {
+        const base = this.stateTargets[stateName] || this.stateTargets.calm_forest;
+        const rain = base.rain;
+        const wind = base.wind;
+        let birds = base.birds - (rain * 0.45) - (wind * 0.15);
+
+        if (stateName === 'storm') {
+            birds = Math.min(birds, 0.03);
+        }
+
+        birds = Math.max(0, Math.min(1, birds));
+
+        return {
+            metsä: clamp(base.forest, 0, 1),
+            linnut: birds,
+            tuuli: clamp(wind, 0, 1),
+            sade: clamp(rain, 0, 1),
+            myrsky: clamp(base.storm, 0, 1)
+        };
+    },
+
+    fadeToTargets(targets, transitionSeconds) {
+        this.clearFadeTimers();
+
+        const activeTargets = this.mapTargetsToActiveIds(targets);
+        const knownIds = Object.keys(activeTargets);
+        const startVolumes = knownIds.reduce((acc, id) => {
+            acc[id] = (aktiivisetKanavat[id] && typeof aktiivisetKanavat[id].targetVol === 'number') ? aktiivisetKanavat[id].targetVol : 0;
+            return acc;
+        }, {});
+
+        const steps = Math.max(6, Math.round(transitionSeconds / 3));
+        const stepMs = Math.max(250, Math.round((transitionSeconds * 1000) / steps));
+
+        for (let step = 1; step <= steps; step++) {
+            const timeout = step * stepMs;
+            const progress = step / steps;
+
+            const timerId = setTimeout(() => {
+                knownIds.forEach(id => {
+                    const startVol = startVolumes[id];
+                    const targetVol = activeTargets[id];
+                    const nextVol = startVol + (targetVol - startVol) * easeInOutCubic(progress);
+                    if (typeof nextVol === 'number') {
+                        muutaVoimakkuutta(id, nextVol);
+                        if (uiRefs[id] && uiRefs[id].slider) {
+                            uiRefs[id].slider.value = nextVol.toFixed(2);
+                        }
+                    }
+                });
+            }, timeout);
+
+            this.fadeTimers.push(timerId);
+        }
+    },
+
+    clearFadeTimers() {
+        this.fadeTimers.forEach(id => clearTimeout(id));
+        this.fadeTimers = [];
+    },
+
+    refreshTrackRoles() {
+        const roleMap = {
+            wind: null,
+            rain: null,
+            birds: null,
+            forest: null,
+            storm: null
+        };
+
+        Object.keys(aktiivisetKanavat).forEach(id => {
+            const meta = ladatutMeta[id] || {};
+            const normalized = [
+                id,
+                meta.name,
+                meta.username,
+                meta.url
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            const role = this.inferRoleFromText(normalized);
+            if (role && !roleMap[role]) {
+                roleMap[role] = id;
+            }
+        });
+
+        this.roleMap = roleMap;
+    },
+
+    inferRoleFromText(source) {
+        const text = String(source || '').toLowerCase();
+        if (/\b(wind|tuuli|breeze|gust|windy)\b/.test(text)) return 'wind';
+        if (/\b(rain|sade|drizzle|wet|rainy)\b/.test(text)) return 'rain';
+        if (/\b(bird|lintu|linnut|birds|forest birds)\b/.test(text)) return 'birds';
+        if (/\b(storm|myrsky|thunder|ukkonen|tempest)\b/.test(text)) return 'storm';
+        if (/\b(forest|metsä|woods|woodland|forest ambience)\b/.test(text)) return 'forest';
+        return null;
+    },
+
+    mapTargetsToActiveIds(targets) {
+        const mapped = {};
+        Object.keys(targets).forEach(role => {
+            const actualId = this.roleMap?.[role] || role;
+            if (actualId && aktiivisetKanavat[actualId]) {
+                mapped[actualId] = targets[role];
+            }
+        });
+        return mapped;
+    }
+};
+
+function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+}
+
+function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
+}
+
+function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
 function toggleStartStopAll() {
@@ -882,10 +1107,15 @@ function muutaVoimakkuutta(id, arvo) {
     if (!kanava) return;
 
     const vol = parseFloat(arvo);
+    if (Number.isNaN(vol)) return;
+
     kanava.targetVol = vol;
+    kanava.volume = vol;
+    kanava.currentVolume = vol;
 
     if (uiRefs[id]) {
         uiRefs[id].readout.innerText = `${Math.round(vol * 100)} %`;
+        uiRefs[id].slider.value = vol.toFixed(2);
     }
 
     if (audioCtx && kanava.sources.length > 0) {
@@ -1149,9 +1379,11 @@ async function lataaSettiObjektista(setti) {
         muutaVoimakkuutta(ch.id, ch.volume ?? 0.5);
 
         if (uiRefs[ch.id]) {
-            uiRefs[ch.id].slider.value = ch.volume ?? 0.5;
+            uiRefs[ch.id].slider.value = (ch.volume ?? 0.5).toFixed(2);
         }
     }
+
+    journeyEngine.refreshTrackRoles();
 
     document.getElementById('statusField').innerText =
         `Set loaded:\n${setti.name || "Untitled"}\n\nStart the tracks or use the Fade All In button.`;
@@ -1277,13 +1509,39 @@ document.getElementById('presetSelect').addEventListener('change', (e) => {
     applyPreset(e.target.value, false);
 });
 
-document.getElementById('randomizeBtn').addEventListener('click', randomizeLandscape);
-document.getElementById('fadeAllBtn').addEventListener('click', fadeAllOutOrIn);
-document.getElementById('startStopAllBtn').addEventListener('click', toggleStartStopAll);
+document.getElementById('randomizeBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    randomizeLandscape();
+});
+document.getElementById('fadeAllBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    fadeAllOutOrIn();
+});
+document.getElementById('startStopAllBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    toggleStartStopAll();
+});
 
-document.getElementById('loadFreesoundBtn').addEventListener('click', startWithFreesound);
-document.getElementById('loadSavedStartupBtn').addEventListener('click', startWithSavedBrowserSet);
-document.getElementById('importStartupBtn').addEventListener('click', startWithJsonImport);
+document.getElementById('journeyBtn').addEventListener('click', () => {
+    if (journeyEngine.active) {
+        journeyEngine.stop();
+    } else {
+        journeyEngine.start();
+    }
+});
+
+document.getElementById('loadFreesoundBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    startWithFreesound();
+});
+document.getElementById('loadSavedStartupBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    startWithSavedBrowserSet();
+});
+document.getElementById('importStartupBtn').addEventListener('click', () => {
+    journeyEngine.stop();
+    startWithJsonImport();
+});
 
 document.getElementById('masterVolume').addEventListener('input', (e) => {
     muutaMasterVolumea(e.target.value);
