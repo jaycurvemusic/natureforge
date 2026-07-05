@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curved Sounds // Nature Forge Forest Mixer</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            background-color: #050806;
+        }
+
+        body {
+            background-image:
+                url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1920&auto=format&fit=crop'),
+                linear-gradient(135deg, #050906, #0c1410, #111a14, #070d0a, #040706);
+            background-size: cover, 400% 400%;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: multiply;
+            animation: gradientMove 30s ease infinite;
+            color: #92a895;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientMove {
+            0% { background-position: center, 0% 50%; }
+            50% { background-position: center, 100% 50%; }
+            100% { background-position: center, 0% 50%; }
+        }
+
+        .container {
+            text-align: center;
+            padding: 34px;
+            border: 1px solid rgba(77, 138, 97, 0.15);
+            border-radius: 14px;
+            background-color: rgba(6, 10, 8, 0.93);
+            box-shadow: 0 30px 70px rgba(0,0,0,0.85);
+            width: 100%;
+            max-width: 720px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #6f9878;
+            font-size: 1.35rem;
+            letter-spacing: 3px;
+            margin: 0 0 5px 0;
+        }
+
+        .subtitle {
+            font-size: 0.75rem;
+            color: #405946;
+            margin-bottom: 24px;
+        }
+
+        .status {
+            margin-bottom: 22px;
+            font-size: 0.8rem;
+            color: #78ad87;
+            white-space: pre-line;
+            line-height: 1.5;
+        }
+
+        .top-controls,
+        .global-controls,
+        .save-controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .global-controls {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            align-items: end;
+        }
+
+        .control-box {
+            background-color: rgba(12, 20, 16, 0.68);
+            border: 1px solid rgba(77, 138, 97, 0.12);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        .control-box label {
+            display: block;
+            font-size: 0.68rem;
+            color: #6e8974;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select,
+        input[type="text"] {
+            width: 100%;
+            background: #070d0a;
+            color: #bdd0c0;
+            border: 1px solid rgba(113, 166, 129, 0.25);
+            border-radius: 6px;
+            padding: 8px;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: transparent;
+            color: #93b99d;
+            border: 1px solid rgba(113, 166, 129, 0.45);
+            padding: 10px 14px;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 7px;
+            font-size: 0.75rem;
+            min-height: 38px;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            background-color: rgba(113, 166, 129, 0.12);
+            border-color: rgba(113, 166, 129, 0.85);
+        }
+
+        button.danger {
+            color: #cf7777;
+            border-color: rgba(207, 102, 102, 0.45);
+        }
+
+        button.active {
+            color: #71d48a;
+            border-color: #71d48a;
+            background-color: rgba(113, 212, 138, 0.08);
+        }
+
+        .mixer-channels {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            text-align: left;
+            margin-top: 18px;
+        }
+
+        .channel {
+            display: grid;
+            grid-template-columns: 1fr 170px 105px;
+            gap: 14px;
+            align-items: center;
+            background-color: rgba(12, 20, 16, 0.66);
+            padding: 14px 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(77, 138, 97, 0.12);
+            box-sizing: border-box;
+        }
+
+        .channel-info {
+            min-width: 0;
+        }
+
+        .channel-title {
+            text-transform: capitalize;
+            font-size: 0.95rem;
+            font-weight: bold;
+            color: #b0c2b3;
+            margin-bottom: 4px;
+        }
+
+        .channel-sound {
+            font-size: 0.68rem;
+            color: #586d5e;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .vol-slider {
+            width: 100%;
+            accent-color: #5c8266;
+            cursor: pointer;
+        }
+
+        .small-readout {
+            font-size: 0.7rem;
+            color: #69806f;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .credits {
+            margin-top: 22px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(77, 138, 97, 0.12);
+            font-size: 0.68rem;
+            color: #546b5a;
+            line-height: 1.5;
+            text-align: left;
+        }
+
+        .credits a {
+            color: #7fae8b;
+            text-decoration: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .startup-panel {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin: 24px auto 28px auto;
+            max-width: 560px;
+        }
+
+        .startup-panel.hidden {
+            display: none;
+        }
+
+        @media (max-width: 720px) {
+            .top-controls,
+            .global-controls,
+            .save-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .channel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>nature_forge // forest_mixer</h1>
+    <div class="subtitle">Curved Sounds Fieldscape Instrument</div>
+
+    <div class="status" id="statusField">Choose how to start.
+
+You can load a new Freesound landscape, load a saved browser set, or import your own JSON set.</div>
+
+    <div class="startup-panel" id="startupPanel">
+        <button id="loadFreesoundBtn" type="button">LOAD NEW FREESOUND LANDSCAPE</button>
+        <button id="loadSavedStartupBtn" type="button">LOAD SAVED BROWSER SET</button>
+        <button id="importStartupBtn" type="button">IMPORT YOUR JSON SET</button>
+    </div>
+
+    <div class="top-controls">
+        <button id="randomizeBtn">RANDOMIZE LANDSCAPE</button>
+        <button id="fadeAllBtn">FADE ALL OUT</button>
+    </div>
+
+    <div class="global-controls">
+        <div class="control-box">
+            <label for="presetSelect">Landscape Preset</label>
+            <select id="presetSelect">
+                <option value="darkForest">Dark Forest</option>
+                <option value="nordicMist">Nordic Mist</option>
+                <option value="autumnRain">Autumn Rain</option>
+                <option value="distantStorm">Distant Storm</option>
+                <option value="morningBirds">Morning Birds</option>
+            </select>
+        </div>
+
+        <div class="control-box">
+            <label for="masterVolume">Master Volume</label>
+            <input id="masterVolume" class="vol-slider" type="range" min="0" max="1" step="0.01" value="0.75">
+            <div class="small-readout" id="masterVolumeReadout">75 %</div>
+        </div>
+
+        <div class="control-box">
+            <label for="masterFilter">Master Lowpass</label>
+            <input id="masterFilter" class="vol-slider" type="range" min="400" max="8000" step="50" value="1600">
+            <div class="small-readout" id="masterFilterReadout">1600 Hz</div>
+        </div>
+    </div>
+
+    <div class="global-controls">
+        <div class="control-box">
+            <label for="evolutionAmount">Evolution Amount</label>
+            <input id="evolutionAmount" class="vol-slider" type="range" min="0" max="1" step="0.01" value="0.25">
+            <div class="small-readout" id="evolutionReadout">25 %</div>
+        </div>
+
+        <div class="control-box">
+            <label for="setName">Set Name</label>
+            <input id="setName" type="text" value="Curved Sounds Forest 01">
+        </div>
+
+        <div class="control-box">
+            <label>My Set</label>
+            <button id="saveSetBtn">Save Set</button>
+        </div>
+    </div>
+
+    <div class="save-controls">
+        <button id="loadBrowserSetBtn">Load From Browser</button>
+        <button id="exportSetBtn">Export JSON</button>
+        <button id="importSetBtn">Import JSON</button>
+        <button id="startStopAllBtn" class="danger" type="button">START ALL</button>
+    </div>
+
+    <input id="importFile" class="hidden" type="file" accept="application/json">
+
+    <div class="mixer-channels" id="mixerChannels">
+        <!-- Kanavat luodaan tänne lennosta -->
+    </div>
+
+    <div class="credits" id="creditsBox">
+        Sound credits will appear here after sounds are loaded.
+    </div>
+</div>
+
+<script>
+// Freesound API key removed from frontend. Use Cloudflare Worker proxy instead.
+
+/*
+    Nature Forge V1
+
+    Tärkeä muutos:
+    Emme käytä source.loop = true -tapaa.
+    Sen sijaan jokainen loop-kierros aikataulutetaan itse.
+    Jokaisella kierroksella on oma gain-envelope:
+    fade in -> pidä ääni -> fade out.
+    Seuraava kierros käynnistyy crossfade-alueella.
+*/
+
+const FADE_TIME = 2.5;
+const MIN_LOOP_SECONDS = 8;
+
+const aaniTyypit = [
+    {
+        id: "tuuli",
+        label: "Wind",
+        queries: [
+            "wind ambience nature",
+            "forest wind",
+            "gentle wind field recording",
+            "wind trees ambience",
+            "soft wind nature"
+        ]
+    },
+    {
+        id: "sade",
+        label: "Rain",
+        queries: [
+            "rain window ambient nature",
+            "soft rain ambience",
+            "rain field recording"
+        ]
+    },
+    {
+        id: "linnut",
+        label: "Birds",
+        queries: [
+            "birds singing forest ambience",
+            "forest birds field recording",
+            "birds nature ambience"
+        ]
+    },
+    {
+        id: "metsä",
+        label: "Forest",
+        queries: [
+            "forest ambience nature field recording",
+            "forest ambience",
+            "woods ambience nature"
+        ]
+    },
+    {
+        id: "myrsky",
+        label: "Thunder",
+        queries: [
+            "thunderstorm rain distance ambience",
+            "distant thunder ambience",
+            "thunder rain field recording"
+        ]
+    }
+];
+
+const landscapePresets = {
+    darkForest: {
+        tuuli: 0.60,
+        sade: 0.25,
+        linnut: 0.12,
+        metsä: 0.75,
+        myrsky: 0.20,
+        filter: 1550,
+        master: 0.72
+    },
+    nordicMist: {
+        tuuli: 0.72,
+        sade: 0.10,
+        linnut: 0.08,
+        metsä: 0.68,
+        myrsky: 0.00,
+        filter: 1300,
+        master: 0.70
+    },
+    autumnRain: {
+        tuuli: 0.38,
+        sade: 0.82,
+        linnut: 0.03,
+        metsä: 0.52,
+        myrsky: 0.12,
+        filter: 1750,
+        master: 0.74
+    },
+    distantStorm: {
+        tuuli: 0.68,
+        sade: 0.70,
+        linnut: 0.00,
+        metsä: 0.35,
+        myrsky: 0.55,
+        filter: 1200,
+        master: 0.76
+    },
+    morningBirds: {
+        tuuli: 0.22,
+        sade: 0.00,
+        linnut: 0.72,
+        metsä: 0.62,
+        myrsky: 0.00,
+        filter: 2600,
+        master: 0.66
+    }
+};
+
+let audioCtx = null;
+let masterGain = null;
+let mainFilter = null;
+
+let ladatutAanet = {};
+let ladatutMeta = {};
+let aktiivisetKanavat = {};
+let uiRefs = {};
+let evolutionTimer = null;
+
+function getChannelDisplayName(id) {
+    const names = {
+        tuuli: "Wind",
+        sade: "Rain",
+        linnut: "Birds",
+        metsä: "Forest",
+        myrsky: "Thunder",
+        wind: "Wind",
+        rain: "Rain",
+        birds: "Birds",
+        forest: "Forest",
+        thunder: "Thunder",
+        storm: "Thunder"
+    };
+
+    return names[id] || id;
+}
+
+async function lataaLuontoAanetLaaja() {
+    const status = document.getElementById('statusField');
+    let onnistuneet = 0;
+
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    for (let aani of aaniTyypit) {
+        let channelLoaded = false;
+
+        status.innerText =
+            `Loading landscape element: ${aani.label || getChannelDisplayName(aani.id)}...\n` +
+            `(${onnistuneet} / ${aaniTyypit.length} ready)`;
+
+        const queryList = aani.queries || [aani.query];
+
+        for (const query of queryList) {
+            if (channelLoaded) break;
+
+            const url =
+                `https://natureforge-api.curvedsounds.com/api/freesound-search?query=${encodeURIComponent(query)}`;
+
+            try {
+                console.log("Trying Freesound query:", aani.id, query);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const usableResults = data.results.filter(item =>
+                        item.previews &&
+                        (item.previews["preview-hq-mp3"] || item.previews["preview-lq-mp3"])
+                    );
+
+                    if (usableResults.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * usableResults.length);
+                        const selectedSound = usableResults[randomIndex];
+
+                        await lataaYksittainenAaniBufferista(aani.id, selectedSound, tempCtx);
+
+                        onnistuneet++;
+                        channelLoaded = true;
+
+                        console.log(
+                            "Loaded channel:",
+                            aani.id,
+                            selectedSound.name,
+                            "using query:",
+                            query
+                        );
+                    }
+                }
+            } catch (e) {
+                console.warn("Query failed:", aani.id, query, e);
+            }
+        }
+
+        if (!channelLoaded) {
+            console.warn("Channel could not be loaded:", aani.id);
+        }
+    }
+
+    tempCtx.close();
+
+    const loadedIds = Object.keys(ladatutAanet);
+    const missingIds = aaniTyypit
+        .map(item => item.id)
+        .filter(id => !loadedIds.includes(id));
+
+    if (onnistuneet > 0) {
+        status.innerText =
+            `Landscape and sound pool ready.\n` +
+            `Selected ${onnistuneet} organic elements.\n` +
+            `Loaded channels: ${loadedIds.map(getChannelDisplayName).join(", ") || "none"}\n` +
+            (
+                missingIds.length > 0
+                    ? `Missing channels: ${missingIds.map(getChannelDisplayName).join(", ")}\n`
+                    : ""
+            ) +
+            `\nMix your soundscape below:`;
+
+        rakennaMikseri();
+        paivitaCredits();
+        applyPreset("darkForest", false);
+        startEvolution();
+    } else {
+        status.innerText =
+            "ERROR: Sound loading failed.\n\n" +
+            "Check your API key, network connection, or browser CORS restrictions.";
+    }
+}
+
+async function lataaYksittainenAaniBufferista(channelId, soundMeta, ctx) {
+    const mp3Url = soundMeta.previews['preview-hq-mp3'] || soundMeta.previews['preview-lq-mp3'];
+    const audioResp = await fetch(mp3Url);
+
+    if (!audioResp.ok) {
+        throw new Error("Äänitiedoston lataus epäonnistui");
+    }
+
+    const arrayBuffer = await audioResp.arrayBuffer();
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+
+    ladatutAanet[channelId] = audioBuffer;
+    ladatutMeta[channelId] = {
+        id: soundMeta.id,
+        name: soundMeta.name,
+        username: soundMeta.username,
+        license: soundMeta.license,
+        url: soundMeta.url,
+        preview: mp3Url,
+        duration: soundMeta.duration
+    };
+}
+
+function varmistaAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        masterGain = audioCtx.createGain();
+        masterGain.gain.setValueAtTime(0.75, audioCtx.currentTime);
+
+        mainFilter = audioCtx.createBiquadFilter();
+        mainFilter.type = 'lowpass';
+        mainFilter.frequency.setValueAtTime(1600, audioCtx.currentTime);
+        mainFilter.Q.setValueAtTime(0.4, audioCtx.currentTime);
+
+        mainFilter.connect(masterGain);
+        masterGain.connect(audioCtx.destination);
+    }
+
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+}
+
+function rakennaMikseri() {
+    const mixerContainer = document.getElementById('mixerChannels');
+    mixerContainer.innerHTML = '';
+    uiRefs = {};
+
+    console.log("Loaded Nature Forge channels:", Object.keys(ladatutAanet));
+
+    Object.keys(ladatutAanet).forEach(id => {
+        aktiivisetKanavat[id] = {
+            sources: [],
+            isPlaying: false,
+            targetVol: 0.5,
+            scheduler: null,
+            generation: 0
+        };
+
+        const channelDiv = document.createElement('div');
+        channelDiv.className = 'channel';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'channel-info';
+
+        const titleDiv = document.createElement('div');
+        titleDiv.className = 'channel-title';
+        titleDiv.innerText = getChannelDisplayName(id);
+
+        const soundDiv = document.createElement('div');
+        soundDiv.className = 'channel-sound';
+        soundDiv.innerText = ladatutMeta[id]?.name || "unknown sound";
+
+        infoDiv.appendChild(titleDiv);
+        infoDiv.appendChild(soundDiv);
+
+        const sliderBox = document.createElement('div');
+
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.className = 'vol-slider';
+        slider.min = 0;
+        slider.max = 1;
+        slider.step = 0.01;
+        slider.value = 0.5;
+        slider.addEventListener('input', (e) => muutaVoimakkuutta(id, e.target.value));
+
+        const readout = document.createElement('div');
+        readout.className = 'small-readout';
+        readout.innerText = "50 %";
+
+        sliderBox.appendChild(slider);
+        sliderBox.appendChild(readout);
+
+        const button = document.createElement('button');
+        button.innerText = "Start";
+        button.addEventListener('click', () => toggleKanava(id, button));
+
+        channelDiv.appendChild(infoDiv);
+        channelDiv.appendChild(sliderBox);
+        channelDiv.appendChild(button);
+        mixerContainer.appendChild(channelDiv);
+
+        uiRefs[id] = { slider, readout, button, soundDiv };
+    });
+}
+
+function toggleKanava(id, button) {
+    varmistaAudioContext();
+    const kanava = aktiivisetKanavat[id];
+
+    if (!kanava.isPlaying) {
+        kanava.isPlaying = true;
+        kanava.generation++;
+        scheduleLoop(id, audioCtx.currentTime + 0.05, kanava.generation);
+
+        button.innerText = "Stop";
+        button.classList.add('active');
+    } else {
+        stopChannelSmooth(id);
+    }
+}
+
+function scheduleLoop(id, startTime, generation) {
+    const kanava = aktiivisetKanavat[id];
+    const buffer = ladatutAanet[id];
+
+    if (!kanava || !buffer || !kanava.isPlaying || generation !== kanava.generation) {
+        return;
+    }
+
+    const duration = Math.max(MIN_LOOP_SECONDS, buffer.duration);
+    const fade = Math.min(FADE_TIME, duration / 4);
+    const now = audioCtx.currentTime;
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+
+    const loopGain = audioCtx.createGain();
+    loopGain.gain.setValueAtTime(0, startTime);
+    loopGain.gain.linearRampToValueAtTime(kanava.targetVol, startTime + fade);
+
+    const fadeOutStart = startTime + duration - fade;
+    loopGain.gain.setValueAtTime(kanava.targetVol, fadeOutStart);
+    loopGain.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    source.connect(loopGain);
+    loopGain.connect(mainFilter);
+
+    source.start(startTime);
+    source.stop(startTime + duration + 0.05);
+
+    kanava.sources.push({ source, gain: loopGain });
+
+    source.onended = () => {
+        kanava.sources = kanava.sources.filter(item => item.source !== source);
+        try {
+            source.disconnect();
+            loopGain.disconnect();
+        } catch (e) {}
+    };
+
+    const nextStart = startTime + duration - fade;
+
+    const timeoutMs = Math.max(50, (nextStart - now) * 1000);
+
+    kanava.scheduler = setTimeout(() => {
+        scheduleLoop(id, nextStart, generation);
+    }, timeoutMs);
+}
+
+function anyChannelPlaying() {
+    return Object.values(aktiivisetKanavat).some(kanava => kanava.isPlaying);
+}
+
+function updateStartStopAllButton() {
+    const btn = document.getElementById('startStopAllBtn');
+    if (!btn) return;
+
+    if (anyChannelPlaying()) {
+        btn.innerText = "STOP ALL";
+        btn.classList.add("danger");
+    } else {
+        btn.innerText = "START ALL";
+        btn.classList.remove("danger");
+    }
+}
+
+function startAllChannels() {
+    Object.keys(aktiivisetKanavat).forEach(id => {
+        const kanava = aktiivisetKanavat[id];
+
+        if (!kanava) return;
+        if (kanava.isPlaying) return;
+        if (kanava.targetVol <= 0.01) return;
+
+        if (uiRefs[id] && uiRefs[id].button) {
+            toggleKanava(id, uiRefs[id].button);
+        }
+    });
+
+    updateStartStopAllButton();
+}
+
+function toggleStartStopAll() {
+    if (anyChannelPlaying()) {
+        stopAllSmooth();
+    } else {
+        startAllChannels();
+    }
+
+    updateStartStopAllButton();
+}
+
+function stopChannelSmooth(id) {
+    const kanava = aktiivisetKanavat[id];
+    if (!kanava || !audioCtx) return;
+
+    kanava.isPlaying = false;
+    kanava.generation++;
+
+    if (kanava.scheduler) {
+        clearTimeout(kanava.scheduler);
+        kanava.scheduler = null;
+    }
+
+    const now = audioCtx.currentTime;
+
+    kanava.sources.forEach(item => {
+        try {
+            const current = item.gain.gain.value;
+            item.gain.gain.cancelScheduledValues(now);
+            item.gain.gain.setValueAtTime(current, now);
+            item.gain.gain.linearRampToValueAtTime(0, now + 1.2);
+            item.source.stop(now + 1.25);
+        } catch (e) {}
+    });
+
+    if (uiRefs[id]) {
+        uiRefs[id].button.innerText = "Start";
+        uiRefs[id].button.classList.remove('active');
+    }
+}
+
+function muutaVoimakkuutta(id, arvo) {
+    const kanava = aktiivisetKanavat[id];
+    if (!kanava) return;
+
+    const vol = parseFloat(arvo);
+    kanava.targetVol = vol;
+
+    if (uiRefs[id]) {
+        uiRefs[id].readout.innerText = `${Math.round(vol * 100)} %`;
+    }
+
+    if (audioCtx && kanava.sources.length > 0) {
+        const now = audioCtx.currentTime;
+        kanava.sources.forEach(item => {
+            try {
+                item.gain.gain.cancelScheduledValues(now);
+                item.gain.gain.setTargetAtTime(vol, now, 0.25);
+            } catch (e) {}
+        });
+    }
+}
+
+function applyPreset(presetName, autostart = false) {
+    const preset = landscapePresets[presetName];
+    if (!preset) return;
+
+    Object.keys(preset).forEach(id => {
+        if (aktiivisetKanavat[id]) {
+            muutaVoimakkuutta(id, preset[id]);
+            if (uiRefs[id]) {
+                uiRefs[id].slider.value = preset[id];
+            }
+
+            if (autostart && preset[id] > 0.05 && !aktiivisetKanavat[id].isPlaying) {
+                toggleKanava(id, uiRefs[id].button);
+            }
+        }
+    });
+
+    document.getElementById('masterVolume').value = preset.master;
+    document.getElementById('masterFilter').value = preset.filter;
+    muutaMasterVolumea(preset.master);
+    muutaMasterFilteria(preset.filter);
+}
+
+async function randomizeLandscape() {
+    stopAllSmooth();
+
+    const status = document.getElementById('statusField');
+    status.innerText = "Randomizing a new landscape and loading new sounds...";
+
+    ladatutAanet = {};
+    ladatutMeta = {};
+    aktiivisetKanavat = {};
+
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let onnistuneet = 0;
+
+    for (let aani of aaniTyypit) {
+        let channelLoaded = false;
+        const queryList = aani.queries || [aani.query];
+
+        for (const query of queryList) {
+            if (channelLoaded) break;
+
+            try {
+                const url =
+                    `https://natureforge-api.curvedsounds.com/api/freesound-search?query=${encodeURIComponent(query)}`;
+
+                console.log("Trying Freesound query:", aani.id, query);
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.results && data.results.length > 0) {
+                    const usableResults = data.results.filter(item =>
+                        item.previews &&
+                        (item.previews["preview-hq-mp3"] || item.previews["preview-lq-mp3"])
+                    );
+
+                    if (usableResults.length > 0) {
+                        const satunnainenIndeksi = Math.floor(Math.random() * usableResults.length);
+                        const valittuAani = usableResults[satunnainenIndeksi];
+                        await lataaYksittainenAaniBufferista(aani.id, valittuAani, tempCtx);
+                        onnistuneet++;
+                        channelLoaded = true;
+                        console.log("Loaded channel:", aani.id, valittuAani.name, "using query:", query);
+                    }
+                }
+            } catch (e) {
+                console.warn("Query failed:", aani.id, query, e);
+            }
+        }
+
+        if (!channelLoaded) {
+            console.warn("Channel could not be loaded:", aani.id);
+        }
+    }
+
+    tempCtx.close();
+
+    rakennaMikseri();
+    paivitaCredits();
+
+    const selectedPreset = document.getElementById('presetSelect').value;
+    applyPreset(selectedPreset, false);
+
+    status.innerText =
+        `New landscape ready.\n` +
+        `Selected ${onnistuneet} organic elements.\n\n` +
+        `You can start the channels manually or use the preset settings.`;
+}
+
+function muutaMasterVolumea(value) {
+    const vol = parseFloat(value);
+    document.getElementById('masterVolumeReadout').innerText = `${Math.round(vol * 100)} %`;
+
+    if (audioCtx && masterGain) {
+        masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.1);
+    }
+}
+
+function muutaMasterFilteria(value) {
+    const freq = parseFloat(value);
+    document.getElementById('masterFilterReadout').innerText = `${Math.round(freq)} Hz`;
+
+    if (audioCtx && mainFilter) {
+        mainFilter.frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.2);
+    }
+}
+
+function stopAllSmooth() {
+    Object.keys(aktiivisetKanavat).forEach(id => {
+        stopChannelSmooth(id);
+    });
+
+    updateStartStopAllButton();
+}
+
+function fadeAllOutOrIn() {
+    const anyPlaying = Object.values(aktiivisetKanavat).some(k => k.isPlaying);
+
+    if (anyPlaying) {
+        stopAllSmooth();
+        document.getElementById('fadeAllBtn').innerText = "FADE ALL IN";
+    } else {
+        Object.keys(aktiivisetKanavat).forEach(id => {
+            const kanava = aktiivisetKanavat[id];
+            if (kanava.targetVol > 0.03 && uiRefs[id]) {
+                toggleKanava(id, uiRefs[id].button);
+            }
+        });
+        document.getElementById('fadeAllBtn').innerText = "FADE ALL OUT";
+    }
+}
+
+function startEvolution() {
+    if (evolutionTimer) clearInterval(evolutionTimer);
+
+    evolutionTimer = setInterval(() => {
+        const amount = parseFloat(document.getElementById('evolutionAmount').value);
+        if (amount <= 0 || !audioCtx) return;
+
+        Object.keys(aktiivisetKanavat).forEach(id => {
+            const kanava = aktiivisetKanavat[id];
+            if (!kanava || !kanava.isPlaying) return;
+
+            const drift = (Math.random() - 0.5) * 0.12 * amount;
+            let uusiVol = kanava.targetVol + drift;
+            uusiVol = Math.max(0, Math.min(1, uusiVol));
+
+            muutaVoimakkuutta(id, uusiVol);
+
+            if (uiRefs[id]) {
+                uiRefs[id].slider.value = uusiVol;
+            }
+        });
+
+        if (mainFilter) {
+            const current = parseFloat(document.getElementById('masterFilter').value);
+            const drift = (Math.random() - 0.5) * 500 * amount;
+            let newFreq = Math.max(500, Math.min(6000, current + drift));
+
+            document.getElementById('masterFilter').value = newFreq;
+            muutaMasterFilteria(newFreq);
+        }
+    }, 9000);
+}
+
+function haeNykyinenSetti() {
+    return {
+        app: "Nature Forge Forest Mixer",
+        version: "1.0",
+        savedAt: new Date().toISOString(),
+        name: document.getElementById('setName').value || "Untitled Nature Forge Set",
+        preset: document.getElementById('presetSelect').value,
+        masterVolume: parseFloat(document.getElementById('masterVolume').value),
+        masterFilter: parseFloat(document.getElementById('masterFilter').value),
+        evolutionAmount: parseFloat(document.getElementById('evolutionAmount').value),
+        channels: Object.keys(aktiivisetKanavat).map(id => ({
+            id,
+            volume: aktiivisetKanavat[id].targetVol,
+            isPlaying: aktiivisetKanavat[id].isPlaying,
+            sound: ladatutMeta[id] || null
+        }))
+    };
+}
+
+function tallennaSettiSelaimeen() {
+    const setti = haeNykyinenSetti();
+    localStorage.setItem("natureForgeSavedSet", JSON.stringify(setti, null, 2));
+
+    document.getElementById('statusField').innerText =
+        `Set saved to browser:\n${setti.name}`;
+}
+
+async function lataaSettiObjektista(setti) {
+    stopAllSmooth();
+
+    document.getElementById('statusField').innerText =
+        `Loading set:\n${setti.name || "Untitled"}`;
+
+    if (setti.name) document.getElementById('setName').value = setti.name;
+    if (setti.preset) document.getElementById('presetSelect').value = setti.preset;
+
+    ladatutAanet = {};
+    ladatutMeta = {};
+    aktiivisetKanavat = {};
+
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    for (const ch of setti.channels || []) {
+        if (!ch.sound || !ch.sound.preview) continue;
+
+        try {
+            const audioResp = await fetch(ch.sound.preview);
+            const arrayBuffer = await audioResp.arrayBuffer();
+            const audioBuffer = await tempCtx.decodeAudioData(arrayBuffer);
+
+            ladatutAanet[ch.id] = audioBuffer;
+            ladatutMeta[ch.id] = ch.sound;
+        } catch (e) {
+            console.warn("Setin äänen lataus epäonnistui:", ch.id, e);
+        }
+    }
+
+    tempCtx.close();
+
+    rakennaMikseri();
+    paivitaCredits();
+
+    if (typeof setti.masterVolume === "number") {
+        document.getElementById('masterVolume').value = setti.masterVolume;
+        muutaMasterVolumea(setti.masterVolume);
+    }
+
+    if (typeof setti.masterFilter === "number") {
+        document.getElementById('masterFilter').value = setti.masterFilter;
+        muutaMasterFilteria(setti.masterFilter);
+    }
+
+    if (typeof setti.evolutionAmount === "number") {
+        document.getElementById('evolutionAmount').value = setti.evolutionAmount;
+        paivitaEvolutionReadout(setti.evolutionAmount);
+    }
+
+    for (const ch of setti.channels || []) {
+        if (!aktiivisetKanavat[ch.id]) continue;
+
+        muutaVoimakkuutta(ch.id, ch.volume ?? 0.5);
+
+        if (uiRefs[ch.id]) {
+            uiRefs[ch.id].slider.value = ch.volume ?? 0.5;
+        }
+    }
+
+    document.getElementById('statusField').innerText =
+        `Set loaded:\n${setti.name || "Untitled"}\n\nStart the tracks or use the Fade All In button.`;
+}
+
+function lataaSettiSelaimesta() {
+    const raw = localStorage.getItem("natureForgeSavedSet");
+
+    if (!raw) {
+        document.getElementById('statusField').innerText =
+            "No saved Nature Forge set was found in the browser.";
+        return;
+    }
+
+    const setti = JSON.parse(raw);
+    lataaSettiObjektista(setti);
+}
+
+function vieSettiJson() {
+    const setti = haeNykyinenSetti();
+    const blob = new Blob([JSON.stringify(setti, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const safeName = setti.name
+        .replace(/[^a-z0-9_\-]+/gi, "_")
+        .replace(/_+/g, "_");
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${safeName || "nature_forge_set"}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function tuoSettiJson(file) {
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        try {
+            const setti = JSON.parse(e.target.result);
+            await lataaSettiObjektista(setti);
+            hideStartupPanel();
+            updateStartStopAllButton();
+        } catch (err) {
+            document.getElementById('statusField').innerText =
+                "JSON set import failed. Please check the file.";
+        }
+    };
+
+    reader.readAsText(file);
+}
+
+function paivitaCredits() {
+    const box = document.getElementById('creditsBox');
+
+    const rows = Object.keys(ladatutMeta).map(id => {
+        const meta = ladatutMeta[id];
+
+        return `
+            <div>
+                <strong>${id}</strong>:
+                ${meta.url}${escapeHtml(meta.name)}</a>
+                by ${escapeHtml(meta.username || "unknown")}
+                — ${escapeHtml(meta.license || "license unknown")}
+            </div>
+        `;
+    });
+
+    box.innerHTML = `
+        <strong>Sound credits / Freesound:</strong>
+        ${rows.join("")}
+    `;
+}
+
+function hideStartupPanel() {
+    const panel = document.getElementById('startupPanel');
+    if (panel) {
+        panel.classList.add('hidden');
+    }
+}
+
+async function startWithFreesound() {
+    hideStartupPanel();
+
+    document.getElementById('statusField').innerText =
+        "Loading a new Nature Forge landscape from Freesound...";
+
+    await lataaLuontoAanetLaaja();
+
+    updateStartStopAllButton();
+}
+
+function startWithSavedBrowserSet() {
+    hideStartupPanel();
+
+    lataaSettiSelaimesta();
+
+    updateStartStopAllButton();
+}
+
+function startWithJsonImport() {
+    document.getElementById('importFile').click();
+}
+
+function paivitaEvolutionReadout(value) {
+    document.getElementById('evolutionReadout').innerText =
+        `${Math.round(parseFloat(value) * 100)} %`;
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+/* Event listeners */
+
+document.getElementById('presetSelect').addEventListener('change', (e) => {
+    applyPreset(e.target.value, false);
+});
+
+document.getElementById('randomizeBtn').addEventListener('click', randomizeLandscape);
+document.getElementById('fadeAllBtn').addEventListener('click', fadeAllOutOrIn);
+document.getElementById('startStopAllBtn').addEventListener('click', toggleStartStopAll);
+
+document.getElementById('loadFreesoundBtn').addEventListener('click', startWithFreesound);
+document.getElementById('loadSavedStartupBtn').addEventListener('click', startWithSavedBrowserSet);
+document.getElementById('importStartupBtn').addEventListener('click', startWithJsonImport);
+
+document.getElementById('masterVolume').addEventListener('input', (e) => {
+    muutaMasterVolumea(e.target.value);
+});
+
+document.getElementById('masterFilter').addEventListener('input', (e) => {
+    muutaMasterFilteria(e.target.value);
+});
+
+document.getElementById('evolutionAmount').addEventListener('input', (e) => {
+    paivitaEvolutionReadout(e.target.value);
+});
+
+document.getElementById('saveSetBtn').addEventListener('click', tallennaSettiSelaimeen);
+document.getElementById('loadBrowserSetBtn').addEventListener('click', lataaSettiSelaimesta);
+document.getElementById('exportSetBtn').addEventListener('click', vieSettiJson);
+
+document.getElementById('importSetBtn').addEventListener('click', () => {
+    document.getElementById('importFile').click();
+});
+
+document.getElementById('importFile').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) {
+        tuoSettiJson(e.target.files[0]);
+    }
+});
+
+/* Start */
+
+// Automaattinen Freesound-lataus poistettu. Käynnistä lataus manuaalisesti.
+// lataaLuontoAanetLaaja();
+</script>
+</body>
+</html>
