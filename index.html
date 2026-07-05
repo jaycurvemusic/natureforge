@@ -862,8 +862,8 @@ const journeyEngine = {
         'after_rain'
     ],
     stateTargets: {
-        calm_forest: { forest: 0.78, wind: 0.28, birds: 0.44, rain: 0.00, storm: 0.00 },
-        windy_forest: { forest: 0.72, wind: 0.56, birds: 0.22, rain: 0.00, storm: 0.00 },
+        calm_forest: { forest: 0.78, wind: 0.06, birds: 0.44, rain: 0.00, storm: 0.00 },
+        windy_forest: { forest: 0.72, wind: 0.38, birds: 0.12, rain: 0.00, storm: 0.00 },
         light_rain: { forest: 0.64, wind: 0.42, birds: 0.16, rain: 0.32, storm: 0.00 },
         heavy_rain: { forest: 0.52, wind: 0.50, birds: 0.08, rain: 0.68, storm: 0.00 },
         storm: { forest: 0.38, wind: 0.78, birds: 0.02, rain: 0.84, storm: 0.48 },
@@ -952,13 +952,36 @@ const journeyEngine = {
 
         birds = Math.max(0, Math.min(1, birds));
 
-        return {
+        const targets = {
             metsä: clamp(base.forest, 0, 1),
             linnut: birds,
             tuuli: clamp(wind, 0, 1),
             sade: clamp(rain, 0, 1),
             myrsky: clamp(base.storm, 0, 1)
         };
+
+        return this.applyNatureRules(targets);
+    },
+
+    applyNatureRules(targets) {
+        const rain = targets.sade || 0;
+        const storm = targets.myrsky || 0;
+        const wind = targets.tuuli || 0;
+        const birds = targets.linnut || 0;
+
+        if (rain <= 0.05 && storm <= 0.05 && birds > 0.15) {
+            targets.tuuli = Math.min(wind, 0.12);
+        }
+
+        if (rain <= 0.05 && storm <= 0.05 && birds > 0.25) {
+            targets.tuuli = Math.min(targets.tuuli || 0, 0.08);
+        }
+
+        if ((targets.tuuli || 0) > 0.25 && targets.linnut !== undefined) {
+            targets.linnut = Math.min(targets.linnut, targets.linnut * 0.35);
+        }
+
+        return targets;
     },
 
     fadeToTargets(targets, transitionSeconds) {
