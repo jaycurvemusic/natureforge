@@ -111,6 +111,11 @@
             margin-bottom: 18px;
         }
 
+        .journey-button {
+            grid-column: 1 / -1;
+            width: 100%;
+        }
+
         .global-controls {
             grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: end;
@@ -331,7 +336,7 @@ You can load a new Freesound landscape, load a saved browser set, or import your
     <div class="top-controls">
         <button id="randomizeBtn">RANDOMIZE LANDSCAPE</button>
         <button id="fadeAllBtn">FADE ALL OUT</button>
-        <button id="journeyBtn" type="button">AMBIENT JOURNEY</button>
+        <button id="journeyBtn" class="journey-button" type="button">AMBIENT JOURNEY</button>
     </div>
 
     <div class="global-controls">
