@@ -281,7 +281,7 @@
 
         .channel {
             display: grid;
-            grid-template-columns: 1fr 170px 105px;
+            grid-template-columns: 1fr 96px 86px 105px;
             gap: 14px;
             align-items: center;
             background-color: rgba(12, 20, 16, 0.66);
@@ -289,6 +289,10 @@
             border-radius: 10px;
             border: 1px solid rgba(77, 138, 97, 0.12);
             box-sizing: border-box;
+        }
+
+        .channel button {
+            width: 100%;
         }
 
         .channel-info {
@@ -816,6 +820,104 @@ function getAudioPreviewUrl(soundMeta) {
     return soundMeta.preview || soundMeta.url || soundMeta.audioUrl || soundMeta.audio || soundMeta.previewUrl || null;
 }
 
+function findTrackTypeById(trackId) {
+    return aaniTyypit.find(t => t.id === trackId) || null;
+}
+
+async function fetchRandomSoundForTrack(trackId) {
+    const trackType = findTrackTypeById(trackId);
+    if (!trackType) return null;
+
+    const queryList = trackType.queries || [trackType.query];
+
+    for (const query of queryList) {
+        const randomPage = Math.floor(Math.random() * 5) + 1;
+        const url =
+            `https://natureforge-api.curvedsounds.com/api/freesound-search?query=${encodeURIComponent(query)}&page=${randomPage}&page_size=50`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                const usableResults = data.results.filter(item =>
+                    item.previews &&
+                    (item.previews['preview-hq-mp3'] || item.previews['preview-lq-mp3'])
+                );
+
+                if (usableResults.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * usableResults.length);
+                    return usableResults[randomIndex];
+                }
+            }
+        } catch (e) {
+            console.warn('Track refresh query failed:', trackId, query, e);
+        }
+    }
+
+    return null;
+}
+
+async function refreshTrackSound(trackId) {
+    const kanava = aktiivisetKanavat[trackId];
+    const refs = uiRefs[trackId];
+    if (!kanava || !refs) return;
+
+    const wasPlaying = kanava.isPlaying;
+    const previousVolume = normalizeVolume(kanava.targetVol ?? 0.5, 0.5);
+    const previousMuted = !!kanava.muted;
+
+    stopChannelSmooth(trackId);
+
+    document.getElementById('statusField').innerText =
+        `Refreshing ${getChannelDisplayName(trackId)} sound...`;
+
+    const newSound = await fetchRandomSoundForTrack(trackId);
+    if (!newSound) {
+        document.getElementById('statusField').innerText =
+            `Could not refresh ${getChannelDisplayName(trackId)}. Try again.`;
+        return;
+    }
+
+    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+    try {
+        await lataaYksittainenAaniBufferista(trackId, newSound, tempCtx);
+    } catch (e) {
+        console.warn('Failed to decode refreshed track:', trackId, e);
+        document.getElementById('statusField').innerText =
+            `Refreshing ${getChannelDisplayName(trackId)} failed. Try again.`;
+        tempCtx.close();
+        return;
+    }
+    tempCtx.close();
+
+    const updatedKanava = aktiivisetKanavat[trackId];
+    if (updatedKanava) {
+        updatedKanava.targetVol = previousVolume;
+        updatedKanava.volume = previousVolume;
+        updatedKanava.currentVolume = previousVolume;
+        updatedKanava.muted = previousMuted;
+    }
+
+    refs.soundDiv.innerText = ladatutMeta[trackId]?.name || 'unknown sound';
+    refs.slider.value = previousVolume.toFixed(2);
+    refs.readout.innerText = `${Math.round(previousVolume * 100)} %`;
+    refs.button.innerText = 'Start';
+    refs.button.classList.remove('active');
+
+    if (wasPlaying) {
+        toggleKanava(trackId, refs.button);
+    }
+
+    if (journeyEngine && typeof journeyEngine.refreshTrackRoles === 'function') {
+        journeyEngine.refreshTrackRoles();
+    }
+
+    updateStartStopAllButton();
+    document.getElementById('statusField').innerText =
+        `${getChannelDisplayName(trackId)} refreshed.`;
+}
+
 function rakennaMikseri() {
     const mixerContainer = document.getElementById('mixerChannels');
     mixerContainer.innerHTML = '';
@@ -869,12 +971,17 @@ function rakennaMikseri() {
         sliderBox.appendChild(slider);
         sliderBox.appendChild(readout);
 
+        const refreshButton = document.createElement('button');
+        refreshButton.innerText = "New";
+        refreshButton.addEventListener('click', () => refreshTrackSound(id));
+
         const button = document.createElement('button');
         button.innerText = "Start";
         button.addEventListener('click', () => toggleKanava(id, button));
 
         channelDiv.appendChild(infoDiv);
         channelDiv.appendChild(sliderBox);
+        channelDiv.appendChild(refreshButton);
         channelDiv.appendChild(button);
         mixerContainer.appendChild(channelDiv);
 
