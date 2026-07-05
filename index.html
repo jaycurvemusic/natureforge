@@ -972,7 +972,8 @@ const journeyEngine = {
         const rain = targets.sade || 0;
         const storm = targets.myrsky || 0;
         const wind = targets.tuuli || 0;
-        const birds = targets.linnut || 0;
+        let birds = targets.linnut || 0;
+        let forest = targets.metsä;
 
         if (rain <= 0.05 && storm <= 0.05 && birds > 0.15) {
             targets.tuuli = Math.min(wind, 0.12);
@@ -983,7 +984,33 @@ const journeyEngine = {
         }
 
         if ((targets.tuuli || 0) > 0.25 && targets.linnut !== undefined) {
-            targets.linnut = Math.min(targets.linnut, targets.linnut * 0.35);
+            birds = Math.min(birds, birds * 0.35);
+        }
+
+        if (storm > 0.15) {
+            birds = 0;
+            forest = Math.min(forest, 0.15);
+        } else if (storm > 0.05) {
+            birds = 0;
+            forest = Math.min(forest, 0.25);
+        }
+
+        if (rain > 0.55) {
+            birds = 0;
+            forest = Math.min(forest, 0.25);
+        } else if (rain > 0.25) {
+            birds = Math.min(birds, 0.05);
+            forest = Math.min(forest, 0.35);
+        } else if (rain > 0.10) {
+            forest = Math.min(forest, 0.45);
+        }
+
+        if (forest !== undefined) {
+            targets.metsä = Math.max(0, Math.min(1, forest));
+        }
+
+        if (targets.linnut !== undefined) {
+            targets.linnut = Math.max(0, Math.min(1, birds));
         }
 
         return targets;
